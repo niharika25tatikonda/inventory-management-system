@@ -1,0 +1,14 @@
+import { DatabaseSync } from 'node:sqlite';
+import crypto from 'node:crypto';
+export const db = new DatabaseSync(process.env.DB_FILE || 'inventory.db');
+db.exec(`PRAGMA foreign_keys=ON;
+CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,name TEXT NOT NULL,email TEXT UNIQUE NOT NULL,password TEXT NOT NULL,role TEXT NOT NULL CHECK(role IN('admin','employee')),created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS suppliers(id INTEGER PRIMARY KEY,name TEXT NOT NULL,email TEXT,phone TEXT,address TEXT);
+CREATE TABLE IF NOT EXISTS products(id INTEGER PRIMARY KEY,sku TEXT UNIQUE NOT NULL,name TEXT NOT NULL,category TEXT,price REAL NOT NULL CHECK(price>=0),cost REAL NOT NULL DEFAULT 0,stock INTEGER NOT NULL DEFAULT 0 CHECK(stock>=0),reorder_level INTEGER NOT NULL DEFAULT 10,supplier_id INTEGER REFERENCES suppliers(id));
+CREATE TABLE IF NOT EXISTS purchases(id INTEGER PRIMARY KEY,product_id INTEGER NOT NULL REFERENCES products(id),supplier_id INTEGER REFERENCES suppliers(id),quantity INTEGER NOT NULL CHECK(quantity>0),unit_cost REAL NOT NULL,created_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS sales(id INTEGER PRIMARY KEY,product_id INTEGER NOT NULL REFERENCES products(id),customer TEXT,quantity INTEGER NOT NULL CHECK(quantity>0),unit_price REAL NOT NULL,created_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP);`);
+export const hash = pw => { const s = crypto.randomBytes(16).toString('hex'); return s + ':' + crypto.scryptSync(pw, s, 32).toString('hex'); };
+export const verify = (pw, h) => { const [s, k] = h.split(':'); return crypto.timingSafeEqual(Buffer.from(k, 'hex'), crypto.scryptSync(pw, s, 32)); };
+export const tx = fn => (...a) => { db.exec('BEGIN'); try { const r = fn(...a); db.exec('COMMIT'); return r; } catch (e) { db.exec('ROLLBACK'); throw e; } };
+import { seed } from './seed.js';
+if (!db.prepare('SELECT 1 FROM users').get()) seed(db, hash);
