@@ -1,0 +1,9 @@
+
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://inventory-management-system-2u07.onrender.com/api/$1"
+    }
+  ]
+}
