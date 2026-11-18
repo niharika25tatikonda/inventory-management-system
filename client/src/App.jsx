@@ -6,7 +6,7 @@ const Badge = ({ s }) => <span className={'badge ' + s}>{s === 'ok' ? 'In stock'
 function Login({ onLogin }) {
   const [f, setF] = useState({ email: '', password: '' }), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
   const go = async e => { e.preventDefault(); setBusy(true); setErr(''); try { const d = await api('/auth/login', { method: 'POST', body: f }); localStorage.setItem('token', d.token); localStorage.setItem('user', JSON.stringify(d.user)); onLogin(d.user); } catch (x) { setErr(x.message); } setBusy(false); };
-  return <div className="login"><form className="card" onSubmit={go}><h1>📦 Inventory Manager</h1><p className="muted">Sign in to continue</p>{err && <div className="alert err">{err}</div>}
+  return <div className="login"><form className="card" onSubmit={go}><h1>📦 Inventory Management System</h1><p className="muted">Sign in to continue</p>{err && <div className="alert err">{err}</div>}
     <label>Email<input type="email" required value={f.email} onChange={e => setF({ ...f, email: e.target.value })} /></label>
     <label>Password<input type="password" required value={f.password} onChange={e => setF({ ...f, password: e.target.value })} /></label>
     <button className="btn primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
@@ -93,6 +93,6 @@ export default function App() {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || 'null')), [page, setPage] = useState('dashboard'), [nav, setNav] = useState(false);
   if (!user) return <Login onLogin={setUser} />;
   const admin = user.role === 'admin', items = [['dashboard', '📊 Dashboard'], ['products', '🏷 Products'], ['inventory', '📦 Inventory'], ['sales', '💰 Sales'], ...(admin ? [['purchases', '🛒 Purchases']] : []), ['suppliers', '🚚 Suppliers'], ...(admin ? [['users', '👥 Users'], ['reports', '📈 Reports']] : [])];
-  return <div className="app"><aside className={nav ? 'open' : ''}><h1>📦 Inventory</h1>{items.map(([k, l]) => <a key={k} className={page === k ? 'on' : ''} onClick={() => { setPage(k); setNav(false); }}>{l}</a>)}</aside>
+  return <div className="app"><aside className={nav ? 'open' : ''}><h1>📦 Inventory Management System</h1>{items.map(([k, l]) => <a key={k} className={page === k ? 'on' : ''} onClick={() => { setPage(k); setNav(false); }}>{l}</a>)}</aside>
     <div className="main"><header><button className="btn sm burger" onClick={() => setNav(!nav)}>☰</button><span className="grow" /><span>{user.name} <span className="badge ok">{user.role}</span></span><button className="btn sm" onClick={() => { localStorage.clear(); setUser(null); }}>Logout</button></header><main><Pages page={page} admin={admin} /></main></div></div>;
 }
